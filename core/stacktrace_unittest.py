@@ -15,15 +15,16 @@ class TabStackTraceTest(tab_test_case.TabTestCase):
   # Stack traces do not currently work on 10.6, but they are also being
   # disabled shortly so just disable it for now.
   # All platforms except chromeos should at least have a valid minidump.
-  @decorators.Disabled('snowleopard', 'chromeos')
+  # Disabled on Windows: https://crbug.com/971998.
+  @decorators.Disabled('snowleopard', 'chromeos', 'win')
   def testValidDump(self):
     with self.assertRaises(exceptions.DevtoolsTargetCrashException) as c:
-      self._tab.Navigate('chrome://crash', timeout=5)
+      self._tab.Navigate('chrome://crash', timeout=10)
     self.assertTrue(c.exception.is_valid_dump)
 
   # Stack traces aren't working on Android yet.
-  @decorators.Enabled('mac', 'linux')
-  @decorators.Disabled('snowleopard')
+  # Disabled on Linux and Mac, flaky: https://crbug.com/820282.
+  @decorators.Disabled('all')
   def testCrashSymbols(self):
     with self.assertRaises(exceptions.DevtoolsTargetCrashException) as c:
       self._tab.Navigate('chrome://crash', timeout=5)
@@ -32,8 +33,8 @@ class TabStackTraceTest(tab_test_case.TabTestCase):
   # Some platforms do not support full stack traces, this test requires only
   # minimal symbols to be available.
   # Disabled on win due to crbug.com/706328.
-  @decorators.Enabled('mac', 'linux')
-  @decorators.Disabled('snowleopard', 'win')
+  # Disabled on Linux and Mac, flaky: https://crbug.com/820282.
+  @decorators.Disabled('all')
   def testCrashMinimalSymbols(self):
     with self.assertRaises(exceptions.DevtoolsTargetCrashException) as c:
       self._tab.Navigate('chrome://crash', timeout=5)
@@ -43,7 +44,9 @@ class TabStackTraceTest(tab_test_case.TabTestCase):
   # The breakpad file specific test only apply to platforms which use the
   # breakpad symbol format. This also must be tested in isolation because it can
   # potentially interfere with other tests symbol parsing.
-  @decorators.Enabled('mac', 'linux')
+  # @decorators.Enabled('mac', 'linux')
+  # Disabled tests due to flakiness: http://crbug.com/820282
+  @decorators.Disabled('all')
   @decorators.Isolated
   def testBadBreakpadFileIgnored(self):
     # pylint: disable=protected-access

@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 from telemetry.page import shared_page_state
-from telemetry import story
 
 from page_sets.rendering import rendering_story
 from page_sets.rendering import story_tags
@@ -37,43 +36,25 @@ class SimplePage(rendering_story.RenderingStory):
       action_runner.ScrollPage(direction='down', speed_in_pixels_per_second=300)
 
 
-class SimpleEbayPage(SimplePage):
+class SimpleEbay2018Page(SimplePage):
   BASE_NAME = 'ebay_scroll'
+  YEAR = '2018'
   URL = 'http://www.ebay.co.uk/'
 
 
-class SimpleFlickrPage(SimplePage):
+class SimpleFlickr2018Page(SimplePage):
   BASE_NAME = 'flickr_scroll'
-  URL = 'https://www.flickr.com/'
+  YEAR = '2018'
+  URL = 'https://www.flickr.com/photos/flickr/albums/72157639858715274'
 
 
-class SimpleNYCGovPage(SimplePage):
+class SimpleNYCGov2018Page(SimplePage):
   BASE_NAME = 'nyc_gov_scroll'
+  YEAR = '2018'
   URL = 'http://www.nyc.gov'
 
 
-class SimpleNYTimesPage(SimplePage):
+class SimpleNYTimes2018Page(SimplePage):
   BASE_NAME = 'nytimes_scroll'
+  YEAR = '2018'
   URL = 'http://m.nytimes.com/'
-
-
-# TODO(crbug.com/760553):remove this class once smoothness.simple_mobile_sites
-# benchmark is completely replaced by rendering benchmarks
-class SimpleMobileSitesPageSet(story.StorySet):
-  """ Simple mobile sites """
-
-  def __init__(self):
-    super(SimpleMobileSitesPageSet, self).__init__(
-      archive_data_file='../data/simple_mobile_sites.json',
-      cloud_storage_bucket=story.PUBLIC_BUCKET)
-
-    page_classes = [
-      # Why: Scrolls moderately complex pages (up to 60 layers)
-      SimpleEbayPage,
-      SimpleFlickrPage,
-      SimpleNYCGovPage,
-      SimpleNYTimesPage
-    ]
-
-    for page_class in page_classes:
-      self.AddStory(page_class(self))

@@ -3,8 +3,8 @@
 # found in the LICENSE file.
 
 from core import perf_benchmark
+from core import platforms
 
-from measurements import power
 import page_sets
 from telemetry import benchmark
 from telemetry import story
@@ -12,75 +12,28 @@ from telemetry.timeline import chrome_trace_category_filter
 from telemetry.web_perf import timeline_based_measurement
 
 
-class _BattOrPowerBenchmark(perf_benchmark.PerfBenchmark):
+@benchmark.Info(emails=['brucedawson@chromium.org'],
+                documentation_url='https://bit.ly/power-benchmarks')
+class PowerDesktop(perf_benchmark.PerfBenchmark):
+  # TODO(rmhasan): Remove the SUPPORTED_PLATFORMS lists.
+  # SUPPORTED_PLATFORMS is deprecated, please put system specifier tags
+  # from expectations.config in SUPPORTED_PLATFORM_TAGS.
+  SUPPORTED_PLATFORMS = [story.expectations.ALL_DESKTOP]
+  SUPPORTED_PLATFORM_TAGS = [platforms.DESKTOP]
+
+  def CreateStorySet(self, options):
+    return page_sets.DesktopPowerStorySet()
 
   def CreateCoreTimelineBasedMeasurementOptions(self):
     category_filter = chrome_trace_category_filter.ChromeTraceCategoryFilter(
         filter_string='toplevel')
     options = timeline_based_measurement.Options(category_filter)
-    options.config.chrome_trace_config.category_filter.AddFilterString('rail')
-    options.config.enable_atrace_trace = True
-    options.config.atrace_config.categories = ['sched']
-    options.config.enable_battor_trace = True
     options.config.enable_chrome_trace = True
     options.config.enable_cpu_trace = True
-    options.SetTimelineBasedMetrics(
-        ['powerMetric', 'clockSyncLatencyMetric', 'cpuTimeMetric'])
+    options.config.chrome_trace_config.SetTraceBufferSizeInKb(300 * 1024)
+    options.SetTimelineBasedMetrics(['tbmv2:cpuTimeMetric',
+                                     'tbmv3:console_error_metric'])
     return options
-
-
-@benchmark.Owner(emails=['perezju@chromium.org'])
-class PowerTypical10Mobile(perf_benchmark.PerfBenchmark):
-  """Android typical 10 mobile power test."""
-  test = power.Power
-  page_set = page_sets.Typical10MobilePageSet
-  SUPPORTED_PLATFORMS = [story.expectations.ALL_MOBILE]
-
-  def SetExtraBrowserOptions(self, options):
-    options.full_performance_mode = False
-
-  @classmethod
-  def Name(cls):
-    return 'power.typical_10_mobile'
-
-
-@benchmark.Owner(emails=['charliea@chromium.org'])
-class IdlePlatformBenchmark(perf_benchmark.PerfBenchmark):
-  """Idle platform benchmark.
-
-  This benchmark just starts up tracing agents and lets the platform sit idle.
-  Our power benchmarks are prone to noise caused by other things running on the
-  system. This benchmark is intended to help find the sources of noise.
-  """
-  def CreateCoreTimelineBasedMeasurementOptions(self):
-    options = timeline_based_measurement.Options(
-        chrome_trace_category_filter.ChromeTraceCategoryFilter())
-    options.config.enable_battor_trace = True
-    options.config.enable_cpu_trace = True
-    # Atrace tracing agent autodetects if its android and only runs if it is.
-    options.config.enable_atrace_trace = True
-    options.config.enable_chrome_trace = False
-    options.SetTimelineBasedMetrics([
-        'clockSyncLatencyMetric',
-        'powerMetric',
-        'tracingMetric'
-    ])
-    return options
-
-  def CreateStorySet(self, options):
-    return page_sets.IdleStorySet()
-
-  @classmethod
-  def Name(cls):
-    return 'power.idle_platform'
-
-
-@benchmark.Owner(emails=['charliea@chromium.org'])
-class PowerDesktop(_BattOrPowerBenchmark):
-  SUPPORTED_PLATFORMS = [story.expectations.ALL_DESKTOP]
-
-  def CreateStorySet(self, options):
-    return page_sets.DesktopPowerStorySet()
 
   @classmethod
   def Name(cls):

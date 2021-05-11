@@ -3,18 +3,18 @@
 # found in the LICENSE file.
 
 import os
+import re
 from telemetry import page
-from contrib.vr_benchmarks import (shared_android_vr_page_state as
-                                   vr_state)
+from contrib.vr_benchmarks import shared_vr_page_state as vr_state
 
 WEBVR_SAMPLE_DIR = os.path.join(
     os.path.dirname(__file__), '..', '..', '..', '..', 'chrome', 'test',
-    'data', 'vr', 'webvr_info', 'samples')
+    'data', 'xr', 'webvr_info', 'samples')
 
 
 WEBXR_SAMPLE_DIR = os.path.join(
-    os.path.dirname(__file__), '..', '..', '..', '..', 'chrome', 'test',
-    'data', 'vr', 'webxr_samples')
+    os.path.dirname(__file__), '..', '..', '..', '..', 'third_party',
+        'webxr_test_pages', 'webxr-samples')
 
 
 class _VrXrSamplePage(page.Page):
@@ -26,13 +26,20 @@ class _VrXrSamplePage(page.Page):
     if url_parameters is not None:
       url += '?' + '&'.join(url_parameters)
     name = url.replace('.html', '')
+    # Replace characters that are unsupported by the perf dashboard here so that
+    # the name reported on the dashboard can be used as a story filter.
+    # We don't use a the \W+ regex like other benchmarks because we need to
+    # keep certain non-alphanumeric characters around for backwards naming
+    # compatibility. This regex should replace anything except alphanumeric,
+    # question mark, dash, and period characters with underscores.
+    name = re.sub(r'[^a-zA-Z\d\?\-\.]+', '_', name)
     url = 'file://' + os.path.join(sample_directory, url)
     super(_VrXrSamplePage, self).__init__(
         url=url,
         page_set=page_set,
         name=name,
         extra_browser_args=extra_browser_args,
-        shared_page_state_class=vr_state.SharedAndroidVrPageState)
+        shared_page_state_class=vr_state.SharedVrPageStateFactory)
     self._shared_page_state = None
 
   def Run(self, shared_state):

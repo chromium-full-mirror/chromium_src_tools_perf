@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 from page_sets.login_helpers import login_utils
 
+from page_sets.helpers import override_online
+
 # Selectors for the email, password, and next buttons for google login flow.
 # Use multiple selectors to allow for different versions of the site.
 _EMAIL_SELECTOR = ','.join([
@@ -29,9 +31,9 @@ _PASSWORD_INPUT_VISIBLE_CONDITION = (
     'document.querySelector("%s") !== null' % (_PASSWORD_SELECTOR))
 
 
-def LoginGoogleAccount(action_runner,
-                       credential='googletest',  # Recommended credential.
-                       credentials_path=login_utils.DEFAULT_CREDENTIAL_PATH):
+def BaseLoginGoogle(action_runner,
+                    credential='googletest',  # Recommended credential.
+                    credentials_path=login_utils.DEFAULT_CREDENTIAL_PATH):
   """Logs in into Google account.
 
   This function navigates the tab into Google's login page and logs in a user
@@ -56,8 +58,9 @@ def LoginGoogleAccount(action_runner,
       credential, credentials_path=credentials_path)
 
   action_runner.Navigate(
-       'https://accounts.google.com/ServiceLogin?continue='
-       'https%3A%2F%2Faccounts.google.com%2FManageAccount')
+      'https://accounts.google.com/ServiceLogin?continue='
+      'https%3A%2F%2Faccounts.google.com%2FManageAccount',
+      override_online.ALWAYS_ONLINE)
 
   # Wait until either the email or password input is visible.
   action_runner.WaitForJavaScriptCondition('{{ @a }} || {{ @b }}',
@@ -73,4 +76,19 @@ def LoginGoogleAccount(action_runner,
 
   login_utils.InputWithSelector(action_runner, password, _PASSWORD_SELECTOR)
   action_runner.ClickElement(selector=_SIGNIN_SELECTOR)
+
+
+def LoginGoogleAccount(action_runner,
+                       credential='googletest',  # Recommended credential.
+                       credentials_path=login_utils.DEFAULT_CREDENTIAL_PATH):
+  """ Login for old UI """
+  BaseLoginGoogle(action_runner, credential, credentials_path)
   action_runner.WaitForElement(text='My Account')
+
+
+def NewLoginGoogleAccount(action_runner,
+                          credential='googletest',  # Recommended credential.
+                          credentials_path=login_utils.DEFAULT_CREDENTIAL_PATH):
+  """ Login for new UI """
+  BaseLoginGoogle(action_runner, credential, credentials_path)
+  action_runner.WaitForElement(text='Google Account')

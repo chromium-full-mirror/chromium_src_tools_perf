@@ -4,9 +4,12 @@
 
 from contrib.cluster_telemetry import ct_benchmarks_util
 from contrib.cluster_telemetry import page_set
+from telemetry.timeline import chrome_trace_category_filter
+from telemetry.web_perf import timeline_based_measurement
 
 from core import perf_benchmark
-from measurements import rendering
+
+import benchmarks.rendering as rendering
 
 def ScrollToEndOfPage(action_runner):
   action_runner.Wait(1)
@@ -18,8 +21,6 @@ class RenderingCT(perf_benchmark.PerfBenchmark):
   """Measures rendering performance for Cluster Telemetry."""
 
   options = {'upload_results': True}
-
-  test = rendering.Rendering
 
   @classmethod
   def Name(cls):
@@ -37,3 +38,11 @@ class RenderingCT(perf_benchmark.PerfBenchmark):
     return page_set.CTPageSet(
         options.urls_list, options.user_agent, options.archive_data_file,
         run_page_interaction_callback=ScrollToEndOfPage)
+
+  def CreateCoreTimelineBasedMeasurementOptions(self):
+    category_filter = chrome_trace_category_filter.CreateLowOverheadFilter()
+    options = timeline_based_measurement.Options(category_filter)
+    options.config.chrome_trace_config.EnableUMAHistograms(
+        *rendering.RENDERING_BENCHMARK_UMA)
+    options.SetTimelineBasedMetrics(['renderingMetric', 'umaMetric'])
+    return options
